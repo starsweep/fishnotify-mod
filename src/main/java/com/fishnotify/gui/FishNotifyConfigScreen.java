@@ -3,17 +3,16 @@ package com.fishnotify.gui;
 import com.fishnotify.client.SoundPlayer;
 import com.fishnotify.config.FishNotifyConfig;
 import net.minecraft.client.Minecraft;
-// UNVERIFIED: GuiGraphics was renamed to GuiGraphicsExtractor as of 26.1 per NeoForge's
-// release notes, and 26.2 didn't reverse that. What's NOT confirmed is whether
-// GuiGraphicsExtractor still exposes the old convenience draw methods (drawCenteredString,
-// fill, blit, etc.) unchanged - the 26.2 primer only documents Font's draw methods being
-// removed, not GuiGraphicsExtractor's. If this doesn't compile, the extractor's text
-// drawing likely now needs to go through Font.PreparedText / a submit-node collector
-// instead of a single drawCenteredString call.
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+// CONFIRMED (26.2 primer): Font's drawInBatch/drawCenteredString methods were removed
+// entirely, and Screen rendering was reorganized around GuiRenderState/extraction rather
+// than an imperative render(graphics, ...) override. Rather than guess at the new
+// Screen.render() signature (undocumented), we sidestep it entirely: the title is now a
+// normal StringWidget added in init(), which is unaffected by the low-level rendering
+// rewrite. The manual render() override and its drawCenteredString call are removed below.
 import net.minecraft.client.gui.components.AbstractSliderButton;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.CycleButton;
+import net.minecraft.client.gui.components.StringWidget;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
@@ -45,6 +44,12 @@ public class FishNotifyConfigScreen extends Screen {
     protected void init() {
         int centerX = this.width / 2;
         int y = this.height / 2 - 110;
+
+        // Title, replacing the old manual graphics.drawCenteredString() call in render().
+        this.addRenderableWidget(new StringWidget(
+                centerX - WIDGET_WIDTH / 2, this.height / 2 - 130, WIDGET_WIDTH, 20,
+                this.title, this.font
+        ).alignCenter());
 
         // Enabled toggle
         this.addRenderableWidget(CycleButton.onOffBuilder(cfg.enabled)
@@ -201,15 +206,6 @@ public class FishNotifyConfigScreen extends Screen {
         }, "FishNotify-FileDialog");
         t.setDaemon(true);
         t.start();
-    }
-
-    @Override
-    public void render(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
-        super.render(graphics, mouseX, mouseY, partialTick);
-        // UNVERIFIED: assumes drawCenteredString survived the rename onto GuiGraphicsExtractor.
-        // If it didn't, this is the line that needs to move onto whatever text-submission
-        // API replaced it (see import comment above).
-        graphics.drawCenteredString(this.font, this.title, this.width / 2, this.height / 2 - 130, 0xFFFFFF);
     }
 
     @Override
