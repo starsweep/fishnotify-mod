@@ -6,7 +6,7 @@ when a fish bites your line.
 ## Features
 
 - **Bite detection** hooks into `FishingHook.catchingFish(BlockPos)`
-- **Default alert sound**: plays default exp chime (`minecraft:entity.experience_orb.pickup`) directly through sound engine so you can hear and control the volume.
+- **Default alert sound**: plays default exp chime (`minecraft:entity.experience_orb.pickup`) directly through sound engine.
 - **Custom sound upload**: replace the default noise and play your own sounds via `javax.sound.sampled` with independent gain control. Supports .wav.
 - **Independent volume slider** (0-200%) for the alert, separate from other in-game volume sliders.
 - **In-game GUI** (default keybind: `'` apostrophe)
