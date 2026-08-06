@@ -54,14 +54,10 @@ src/main/resources/
 
 ## Dependencies
 
-Built and pinned against the exact jars you provided:
-
 | Mod | Version | Used for |
 |---|---|---|
 | Fabric API | 0.156.0+26.2 | `fabric-key-mapping-api-v1` (the settings keybind) and `fabric-lifecycle-events-v1` (the client tick loop that drives repeat-alerts and the keybind check) |
 | Mod Menu | 20.0.1 | Optional — adds FishNotify's settings screen to the normal Mods list. Confirmed against the real `ModMenuApi`/`ConfigScreenFactory` classes in your jar (`getModConfigScreenFactory()` returning a `ConfigScreenFactory<Screen>`). Not required to launch; declared under `"suggests"` in `fabric.mod.json`, and referenced with `modCompileOnly` in Gradle so the jar builds fine without it and just won't add the Mods-screen entry if it's absent. |
-| Forge Config API Port | 26.2.1 | **Not used.** AutoFish depends on this because it builds its settings UI on top of NeoForge's `ConfigurationScreen` system (ported to Fabric). FishNotify has its own hand-built `Screen`/GUI, so there was nothing to wire up - only pulling it in would make sense if you wanted FishNotify's config to visually match a Forge-style config screen instead. |
-| Placeholder API | 3.1.0-beta.1+26.2 | Not used directly by FishNotify - it's there because Mod Menu itself pulls it in (Mod Menu uses it for text formatting in its UI), not because AutoFish or FishNotify needs it. No action needed on our end; just make sure it's in your `mods/` folder alongside Mod Menu. |
 
 ## Building
 
@@ -77,53 +73,3 @@ IntelliJ IDEA with the Fabric/Loom plugin, which will generate it for you).
 The built mod jar will be in `build/libs/fishnotify-1.0.0.jar`. Drop it in
 your `mods/` folder alongside Fabric Loader 0.19.3+ and Fabric API
 0.156.0+26.2 for Minecraft 26.2.
-
-## Things worth double-checking before you rely on this
-
-Minecraft 26.1 dropped obfuscation entirely, so as of 26.2 there's no Yarn
-mapping layer anymore - mods are written directly against Mojang's official
-class/method names. I cross-checked the key names in this project
-(`FishingHook`, `catchingFish`, `getOwner`, `Identifier`, `Minecraft`,
-`LocalPlayer`, etc.) against the decompiled bytecode of your XPlus AutoFish
-1.5.1 jar, which is built for the same MC version and hooks the same method,
-so those should be solid. A few things I *couldn't* cross-check and would
-verify with `./gradlew genSources` before shipping:
-
-- `Level#playLocalSound(x, y, z, SoundEvent, SoundSource, volume, pitch, bool)`
-  - this signature is standard across recent versions but I didn't find it
-  directly in the AutoFish bytecode to confirm it's unchanged in 26.2.
-- Exact `CycleButton`/`AbstractSliderButton`/`Button` constructor and builder
-  shapes - these are GUI-only classes AutoFish doesn't touch (it uses
-  NeoForge's config screen builder instead), so I built the screen from
-  well-established Mojang-mapping conventions rather than a direct 26.2
-  reference. If a widget API shifted slightly, the fix is almost always a
-  one-line signature tweak.
-
-If anything doesn't compile, the error message plus a `genSources`-decompiled
-copy of the relevant vanilla class will point you straight at the fix.
-
-## About the four dependency jars you sent over
-
-I decompiled all four to cross-check APIs before finalizing this build:
-
-- **fabric-api-0.156.0+26.2** - this caught a real bug: Fabric API renamed
-  `KeyBindingHelper` to `KeyMappingHelper` (package
-  `net.fabricmc.fabric.api.client.keymapping.v1`, method
-  `registerKeyMapping`) somewhere in the 26.x cycle, matching Mojang's own
-  `KeyBinding` → `KeyMapping` rename. The code now uses the correct class.
-  `ClientTickEvents.END_CLIENT_TICK` was unchanged, so that part was already
-  right.
-- **modmenu-20.0.1** - added a proper integration
-  (`com.fishnotify.gui.FishNotifyModMenuApi`, wired up via the `"modmenu"`
-  entrypoint and a `"suggests"` soft dependency in `fabric.mod.json`). It's
-  loaded only if Mod Menu is present, so it doesn't become a hard
-  requirement to run FishNotify.
-- **ForgeConfigAPIPort** - not wired in. It exists to let mods reuse
-  NeoForge/Forge's config screen system (which is what AutoFish's screen
-  builder relies on), but FishNotify already has its own native Fabric
-  config screen, so pulling it in would just be an extra dependency with
-  nothing for it to do.
-- **Placeholder API** - also not wired in, and worth noting it's not a
-  direct AutoFish dependency either: it's pulled in because Mod Menu itself
-  uses it for text formatting in its UI. It just needs to sit in your
-  `mods/` folder alongside Mod Menu; FishNotify doesn't call into it.
