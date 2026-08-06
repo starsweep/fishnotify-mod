@@ -46,10 +46,12 @@ public class FishNotifyConfigScreen extends Screen {
         int y = this.height / 2 - 110;
 
         // Title, replacing the old manual graphics.drawCenteredString() call in render().
+        // NOTE: StringWidget has no alignCenter() in this version, so this renders
+        // left-aligned within its box rather than centered - cosmetic only, not a build blocker.
         this.addRenderableWidget(new StringWidget(
                 centerX - WIDGET_WIDTH / 2, this.height / 2 - 130, WIDGET_WIDTH, 20,
                 this.title, this.font
-        ).alignCenter());
+        ));
 
         // Enabled toggle
         this.addRenderableWidget(CycleButton.onOffBuilder(cfg.enabled)
