@@ -3,12 +3,6 @@ package com.fishnotify.gui;
 import com.fishnotify.client.SoundPlayer;
 import com.fishnotify.config.FishNotifyConfig;
 import net.minecraft.client.Minecraft;
-// CONFIRMED (26.2 primer): Font's drawInBatch/drawCenteredString methods were removed
-// entirely, and Screen rendering was reorganized around GuiRenderState/extraction rather
-// than an imperative render(graphics, ...) override. Rather than guess at the new
-// Screen.render() signature (undocumented), we sidestep it entirely: the title is now a
-// normal StringWidget added in init(), which is unaffected by the low-level rendering
-// rewrite. The manual render() override and its drawCenteredString call are removed below.
 import net.minecraft.client.gui.components.AbstractSliderButton;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.CycleButton;
