@@ -6,8 +6,7 @@ A client-side mod for Minecraft Fabric Loader that plays an alert when a fish bi
 
 - **Alert sound**: plays default exp chime (`minecraft:entity.experience_orb.pickup`) directly through sound engine. you can replace the default noise and play your own sounds via `javax.sound.sampled` with independent gain control. Supports .wav.
 - **In-game GUI** (default keybind: `'` apostrophe)
-- Settings persist to `config/fishnotify/config.json`; uploaded sounds are copied into `config/fishnotify/sounds/`.
-- **Mod Menu integration** (optional/soft dependency)
+- **Mod Menu integration** (optional dependency)
 
 This mod is intentionally **alert-only** - it does NOT auto-reel or auto-recast for you. Built for server rule compliance.
 
