@@ -13,12 +13,17 @@ import net.minecraft.network.chat.Component;
 // CONFIRMED: ResourceLocation was renamed to Identifier in 1.21.11, before 26.1 existed.
 // 26.2 still uses Identifier - this is not a guess.
 import net.minecraft.resources.Identifier;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.FishingHook;
 import net.minecraft.world.item.FishingRodItem;
 import net.minecraft.world.item.ItemStack;
 
 public class FishNotifyClient implements ClientModInitializer {
+
+    // How close (squared, in blocks²) a splash sound has to be to our own
+    // hook to count as "our bite" rather than some other player's bobber
+    // splashing nearby. 4.0 = within 2 blocks. Loosen this if you get
+    // missed bites, tighten it if you get pinged by neighbors fishing.
+    private static final double HOOK_SOUND_DISTANCE_SQ_THRESHOLD = 4.0;
 
     private static final KeyMapping.Category CATEGORY =
             KeyMapping.Category.register(Identifier.fromNamespaceAndPath("fishnotify", "fishnotify"));
@@ -26,13 +31,10 @@ public class FishNotifyClient implements ClientModInitializer {
     private static KeyMapping openConfigKey;
 
     // Tracks whether we're still waiting on a reel-in, for the repeat-alert
-    // feature. Deliberately doesn't hold a reference to the FishingHook
-    // itself: the hook instance passed into onFishBite() may be the
-    // integrated-server's copy (see the UUID comparison above for why), so
-    // comparing it against client.player.fishing (the client-side synced
-    // copy) later would be comparing two different objects. Instead we just
-    // watch client.player.fishing for going null, which is a reliable
-    // client-side signal that the bobber is gone (reeled in or despawned).
+    // feature. We watch client.player.fishing for going null as the signal
+    // that the bobber is gone (reeled in or despawned) - that field is kept
+    // in sync with the server's actual fishing state regardless of how we
+    // detected the bite.
     private static boolean awaitingReel;
     private static int ticksSinceBite;
     private static int ticksSinceLastRepeat;
@@ -51,21 +53,23 @@ public class FishNotifyClient implements ClientModInitializer {
         ClientTickEvents.END_CLIENT_TICK.register(FishNotifyClient::onClientTick);
     }
 
-    /** Called from FishingHookMixin the instant a fish takes the bait. */
-    public static void onFishBite(FishingHook hook) {
+    /**
+     * Called from ClientPacketListenerMixin the instant the client receives
+     * a "fishing_bobber.splash" sound packet from the server. This is a
+     * purely client-side signal (see the mixin's javadoc for why that
+     * matters), so it works on real dedicated multiplayer servers, not just
+     * singleplayer.
+     */
+    public static void onSplashSoundPacket(double x, double y, double z) {
         Minecraft client = Minecraft.getInstance();
         LocalPlayer player = client.player;
         if (player == null) return;
 
-        Object owner = hook.getOwner();
-        // Compare by UUID, not object identity: in singleplayer, catchingFish()
-        // runs on the integrated server thread against a ServerPlayer instance,
-        // which is a different Java object than the client's LocalPlayer even
-        // though it's the same real player. A reference-equality check here
-        // silently fails every single bite.
-        if (!(owner instanceof Player ownerPlayer) || !ownerPlayer.getUUID().equals(player.getUUID())) {
-            return; // only alert for the local player's own bobber
-        }
+        FishingHook hook = player.fishing;
+        if (hook == null) return; // we're not even fishing right now - ignore
+
+        double distSq = hook.distanceToSqr(x, y, z);
+        if (distSq > HOOK_SOUND_DISTANCE_SQ_THRESHOLD) return; // someone else's bobber, not ours
 
         FishNotifyConfig cfg = FishNotifyConfig.get();
         if (!cfg.enabled) return;
@@ -76,7 +80,12 @@ public class FishNotifyClient implements ClientModInitializer {
         ticksSinceBite = 0;
         ticksSinceLastRepeat = 0;
 
-        triggerAlert(cfg);
+        // Packet handling already runs on the client's main thread (unlike
+        // the old catchingFish-based approach, which could fire from the
+        // integrated-server thread in singleplayer), but we still hop
+        // through client.execute() defensively - it's a no-op if we're
+        // already on the right thread.
+        client.execute(() -> triggerAlert(cfg));
     }
 
     private static void triggerAlert(FishNotifyConfig cfg) {

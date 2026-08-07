@@ -4,7 +4,7 @@
   "package": "com.fishnotify.mixin",
   "compatibilityLevel": "JAVA_21",
   "client": [
-    "FishingHookMixin"
+    "ClientPacketListenerMixin"
   ],
   "injectors": {
     "defaultRequire": 1

@@ -5,7 +5,10 @@ when a fish bites your line.
 
 ## Features
 
-- **Bite detection** hooks into `FishingHook.catchingFish(BlockPos)`
+- **Bite detection** watches for the `minecraft:entity.fishing_bobber.splash`
+  sound packet the server broadcasts near your bobber - a purely
+  client-side network observation, so it works on real dedicated
+  multiplayer servers as well as singleplayer.
 - **Default alert sound**: plays default exp chime (`minecraft:entity.experience_orb.pickup`) directly through sound engine.
 - **Custom sound upload**: replace the default noise and play your own sounds via `javax.sound.sampled` with independent gain control. Supports .wav.
 - **Independent volume slider** (0-200%) for the alert, separate from other in-game volume sliders.
@@ -21,7 +24,7 @@ auto-recast for you. Built for server rule compliance.
 ```
 build.gradle, settings.gradle, gradle.properties   - Gradle/Loom build config
 src/main/java/com/fishnotify/
-  mixin/FishingHookMixin.java     - hooks the vanilla bite method
+  mixin/ClientPacketListenerMixin.java - watches for the bite splash sound packet
   client/FishNotifyClient.java    - client entrypoint, keybind, alert logic
   client/SoundPlayer.java         - plays the default or custom sound
   config/FishNotifyConfig.java    - settings persistence + sound import
