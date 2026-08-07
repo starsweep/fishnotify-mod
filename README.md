@@ -5,10 +5,17 @@ when a fish bites your line.
 
 ## Features
 
-- **Bite detection** watches for the `minecraft:entity.fishing_bobber.splash`
-  sound packet the server broadcasts near your bobber - a purely
-  client-side network observation, so it works on real dedicated
-  multiplayer servers as well as singleplayer.
+- **Bite detection**, two independent signals, either can trigger the alert:
+  1. Primary: watches for the `minecraft:entity.fishing_bobber.splash`
+     sound packet the server broadcasts near your bobber - a purely
+     client-side network observation, so it works on real dedicated
+     multiplayer servers as well as singleplayer.
+  2. Fallback: watches your own hook's Y position each client tick for the
+     sharp downward jerk a bite causes. This catches the (rare) case where
+     you're outside the server's sound-broadcast radius for that packet -
+     you're still synced to your own hook's position regardless, so this
+     signal doesn't depend on proximity/broadcast range the way the sound
+     packet does. Modeled on AutoFish's `FishMonitorMPMotion`.
 - **Default alert sound**: plays default exp chime (`minecraft:entity.experience_orb.pickup`) directly through sound engine.
 - **Custom sound upload**: replace the default noise and play your own sounds via `javax.sound.sampled` with independent gain control. Supports .wav.
 - **Independent volume slider** (0-200%) for the alert, separate from other in-game volume sliders.

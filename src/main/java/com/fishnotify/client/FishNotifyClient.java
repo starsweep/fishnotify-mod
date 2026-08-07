@@ -25,6 +25,19 @@ public class FishNotifyClient implements ClientModInitializer {
     // missed bites, tighten it if you get pinged by neighbors fishing.
     private static final double HOOK_SOUND_DISTANCE_SQ_THRESHOLD = 4.0;
 
+    // Fallback bite detector: watches the hook's own Y position each tick
+    // for the sharp downward jerk a bite causes. This matters because the
+    // sound-packet detector depends on the server's sound-broadcast radius
+    // deciding you're "nearby enough" to receive that packet at all - in
+    // the (rare) case it doesn't, we still see our own hook's position
+    // sync normally, since servers always keep you synced to your own
+    // entities regardless of that radius. Modeled on AutoFish's
+    // FishMonitorMPMotion, which does the same thing off a raw motion
+    // packet - we get an equivalent signal for free just by diffing
+    // position each tick, since we're already polling every tick anyway.
+    private static final int HOOK_SETTLE_TICKS = 15; // ~0.75s grace period after cast before we start watching, so the initial splash-into-water doesn't false-trigger
+    private static final double MOTION_Y_DROP_THRESHOLD = 0.15; // blocks dropped in a single tick; idle bobber bob is much smaller than this
+
     private static final KeyMapping.Category CATEGORY =
             KeyMapping.Category.register(Identifier.fromNamespaceAndPath("fishnotify", "fishnotify"));
 
@@ -38,6 +51,12 @@ public class FishNotifyClient implements ClientModInitializer {
     private static boolean awaitingReel;
     private static int ticksSinceBite;
     private static int ticksSinceLastRepeat;
+
+    // State for the Y-motion fallback watcher - reset whenever the hook
+    // reference changes (new cast, or reeled in).
+    private static FishingHook trackedHook;
+    private static double previousHookY;
+    private static int ticksHookPresent;
 
     @Override
     public void onInitializeClient() {
@@ -71,6 +90,51 @@ public class FishNotifyClient implements ClientModInitializer {
         double distSq = hook.distanceToSqr(x, y, z);
         if (distSq > HOOK_SOUND_DISTANCE_SQ_THRESHOLD) return; // someone else's bobber, not ours
 
+        // Packet handling already runs on the client's main thread (unlike
+        // the old catchingFish-based approach, which could fire from the
+        // integrated-server thread in singleplayer), but we still hop
+        // through client.execute() defensively - it's a no-op if we're
+        // already on the right thread.
+        client.execute(() -> handleBiteDetected(player));
+    }
+
+    /**
+     * Fallback bite detector, called every client tick. Diffs the hook's Y
+     * position against last tick's to catch the same downward-jerk signal
+     * the sound-packet detector is aiming for, but from a source (entity
+     * position sync) that isn't subject to the server's sound-broadcast
+     * radius. See the field javadoc above for the full reasoning.
+     */
+    private static void checkMotionFallback(LocalPlayer player) {
+        FishingHook hook = player.fishing;
+
+        if (hook != trackedHook) {
+            // New cast (or hook gone) - reset tracking state.
+            trackedHook = hook;
+            ticksHookPresent = 0;
+            if (hook != null) previousHookY = hook.getY();
+            return;
+        }
+
+        if (hook == null) return;
+
+        ticksHookPresent++;
+        double currentY = hook.getY();
+        double dropThisTick = previousHookY - currentY;
+        previousHookY = currentY;
+
+        if (ticksHookPresent < HOOK_SETTLE_TICKS) return; // still settling from the cast splash, ignore
+        if (awaitingReel) return; // already alerted for this bite, don't re-trigger
+
+        if (dropThisTick >= MOTION_Y_DROP_THRESHOLD) {
+            handleBiteDetected(player);
+        }
+    }
+
+    /** Shared by both bite detectors once they've confirmed it's a real bite worth alerting on. */
+    private static void handleBiteDetected(LocalPlayer player) {
+        if (awaitingReel) return; // already handling this bite, avoid double-alerting
+
         FishNotifyConfig cfg = FishNotifyConfig.get();
         if (!cfg.enabled) return;
 
@@ -80,12 +144,7 @@ public class FishNotifyClient implements ClientModInitializer {
         ticksSinceBite = 0;
         ticksSinceLastRepeat = 0;
 
-        // Packet handling already runs on the client's main thread (unlike
-        // the old catchingFish-based approach, which could fire from the
-        // integrated-server thread in singleplayer), but we still hop
-        // through client.execute() defensively - it's a no-op if we're
-        // already on the right thread.
-        client.execute(() -> triggerAlert(cfg));
+        triggerAlert(cfg);
     }
 
     private static void triggerAlert(FishNotifyConfig cfg) {
@@ -108,6 +167,11 @@ public class FishNotifyClient implements ClientModInitializer {
     private static void onClientTick(Minecraft client) {
         if (openConfigKey.consumeClick()) {
             client.gui.setScreen(new FishNotifyConfigScreen(client.gui.screen()));
+        }
+
+        LocalPlayer player = client.player;
+        if (player != null) {
+            checkMotionFallback(player);
         }
 
         if (!awaitingReel) return;
