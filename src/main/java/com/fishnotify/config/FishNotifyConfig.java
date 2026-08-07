@@ -15,8 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Handles FishNotify's persisted settings and the folder of importable
- * custom bite-alert sounds.
+ * Handles FishNotify's settings and the custom bite-alert sounds folder.
  *
  * Layout on disk:
  *   config/fishnotify/config.json  - settings (volume, enabled, selected sound, etc.)
@@ -24,7 +23,7 @@ import java.util.List;
  */
 public class FishNotifyConfig {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
-    // Sentinel value (not a real file) meaning "use the built-in vanilla exp-orb ding".
+    // Sentinel value
     private static final String DEFAULT_SOUND_ID = "__default_ding__";
 
     private static Path configDir;
@@ -37,7 +36,7 @@ public class FishNotifyConfig {
     public boolean enabled = true;
     public float volume = 1.0f; // linear scale, 0.0-2.0 (100% = unmodified volume)
     public String selectedSoundId = DEFAULT_SOUND_ID;
-    public boolean showActionBarAlert = false; // off by default - opt in if you want a chat message alongside the sound
+    public boolean showActionBarAlert = false; // off by default
     public boolean requireRodInHand = true;
     public int alertRepeatTicks = 0; // 0 = play once; >0 repeats the alert every N ticks until you reel in
     public List<String> importedSoundFiles = new ArrayList<>();

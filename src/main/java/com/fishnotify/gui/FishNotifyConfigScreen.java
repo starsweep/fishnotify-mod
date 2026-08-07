@@ -39,9 +39,6 @@ public class FishNotifyConfigScreen extends Screen {
         int centerX = this.width / 2;
         int y = this.height / 2 - 110;
 
-        // Title, replacing the old manual graphics.drawCenteredString() call in render().
-        // NOTE: StringWidget has no alignCenter() in this version, so this renders
-        // left-aligned within its box rather than centered - cosmetic only, not a build blocker.
         this.addRenderableWidget(new StringWidget(
                 centerX - WIDGET_WIDTH / 2, this.height / 2 - 130, WIDGET_WIDTH, 20,
                 this.title, this.font
@@ -64,10 +61,6 @@ public class FishNotifyConfigScreen extends Screen {
 
         // Sound selector
         soundOptions = buildSoundOptionList();
-        // UNVERIFIED: the compiler says builder() now wants 2 args where we used to chain
-        // .withInitialValue(...) after a 1-arg builder(). Moving the initial value into the
-        // builder() call itself matches the error, but I haven't confirmed this against
-        // official 26.2 source - if wrong, check CycleButton's actual method list.
         String initialSound = soundOptions.contains(cfg.selectedSoundId) ? cfg.selectedSoundId : FishNotifyConfig.defaultSoundId();
         CycleButton<String> soundButton = CycleButton.<String>builder(this::soundOptionLabel, initialSound)
                 .withValues(soundOptions)
@@ -120,7 +113,6 @@ public class FishNotifyConfigScreen extends Screen {
         y += ROW_HEIGHT;
 
         // Repeat alert interval
-        // UNVERIFIED: same builder(function, initialValue) guess as the sound button above.
         this.addRenderableWidget(CycleButton.<Integer>builder(this::repeatLabel, cfg.alertRepeatTicks)
                 .withValues(0, 20, 40, 60)
                 .create(centerX - WIDGET_WIDTH / 2, y, WIDGET_WIDTH, 20,

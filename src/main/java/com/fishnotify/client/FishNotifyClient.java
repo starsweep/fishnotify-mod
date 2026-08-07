@@ -17,10 +17,9 @@ import net.minecraft.world.item.ItemStack;
 
 public class FishNotifyClient implements ClientModInitializer {
 
-    // How close (squared, in blocks²) a splash sound has to be to our own
+    // How close (squared, in blocks^2) a splash sound has to be to our own
     // hook to count as "our bite" rather than some other player's bobber
-    // splashing nearby. 4.0 = within 2 blocks. Loosen this if you get
-    // missed bites, tighten it if you get pinged by neighbors fishing.
+    // splashing nearby. 4.0 = within 2 blocks.
     private static final double HOOK_SOUND_DISTANCE_SQ_THRESHOLD = 4.0;
 
     // Fallback bite detector: watches the hook's own Y position each tick
@@ -173,12 +172,6 @@ public class FishNotifyClient implements ClientModInitializer {
         if (cfg.showActionBarAlert) {
             Minecraft client = Minecraft.getInstance();
             if (client.player != null) {
-                // UNVERIFIED: displayClientMessage(component, boolean) is gone in 26.2 and the
-                // action-bar flag doesn't appear to have a documented 1:1 replacement yet.
-                // sendSystemMessage puts this in chat rather than the action bar - if you need
-                // a real action-bar toast, look at Hud#setOverlayMessage
-                // (Minecraft.getInstance().gui.hud.setOverlayMessage(...)) instead, which the
-                // 26.2 primer does confirm as the action-bar/overlay message API.
                 client.player.sendSystemMessage(Component.translatable("message.fishnotify.bite"));
             }
         }
