@@ -1,6 +1,6 @@
 # FishNotify
 
-A completely client-side Fabric mod for Minecraft 26.2 that plays an alert when a fish bites your line.
+A client-side Fabric mod for Minecraft 26.2 that plays an alert when a fish bites your line.
 
 ## Features
 
