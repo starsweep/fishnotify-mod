@@ -3,6 +3,7 @@
   "id": "fishnotify",
   "version": "${version}",
   "name": "FishNotify",
+  "icon": "assets/fishnotify/fih.png",
   "description": "Plays a sound when a fish bites. Includes an in-game GUI for custom sound uploads and independent volume control.",
   "authors": ["starsweep"],
   "contact": {
