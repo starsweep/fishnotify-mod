@@ -10,8 +10,6 @@ import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.chat.Component;
-// CONFIRMED: ResourceLocation was renamed to Identifier in 1.21.11, before 26.1 existed.
-// 26.2 still uses Identifier - this is not a guess.
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.projectile.FishingHook;
 import net.minecraft.world.item.FishingRodItem;

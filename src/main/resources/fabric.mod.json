@@ -3,9 +3,11 @@
   "id": "fishnotify",
   "version": "${version}",
   "name": "FishNotify",
-  "description": "Plays a sound (custom or default) the moment a fish bites, so you know exactly when to reel in. Includes an in-game GUI for custom sound uploads and independent volume control.",
-  "authors": ["you"],
-  "contact": {},
+  "description": "Plays a sound when a fish bites. Includes an in-game GUI for custom sound uploads and independent volume control.",
+  "authors": ["starsweep"],
+  "contact": {
+    "email": "starsweep7@gmail.com"
+  },
   "license": "MIT",
   "environment": "client",
   "entrypoints": {
