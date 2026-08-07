@@ -4,7 +4,7 @@ A Fabric client mod for Minecraft 26.2 that plays an alert when a fish bites you
 
 ## Features
 
-- **Alert sound**: plays default exp chime (`minecraft:entity.experience_orb.pickup`) directly through sound engine. you can replace the default noise and play your own sounds via `javax.sound.sampled` with independent gain control. Supports .wav.\\
+- **Alert sound**: plays default exp chime (`minecraft:entity.experience_orb.pickup`) directly through sound engine. you can replace the default noise and play your own sounds via `javax.sound.sampled` with independent gain control. Supports .wav.
 - **In-game GUI** (default keybind: `'` apostrophe)
 - Settings persist to `config/fishnotify/config.json`; uploaded sounds are copied into `config/fishnotify/sounds/`.
 - **Mod Menu integration** (optional/soft dependency)
