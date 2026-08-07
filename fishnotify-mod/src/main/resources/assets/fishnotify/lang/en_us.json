@@ -1,0 +1,22 @@
+{
+  "key.fishnotify.open_config": "Open FishNotify Settings",
+  "key.category.fishnotify.fishnotify": "FishNotify",
+
+  "screen.fishnotify.title": "FishNotify Settings",
+
+  "option.fishnotify.enabled": "Bite Alerts",
+  "option.fishnotify.volume": "Volume: %s%%",
+  "option.fishnotify.sound": "Alert Sound",
+  "option.fishnotify.sound.default": "Default (Exp Ding)",
+  "option.fishnotify.action_bar": "Action Bar Message",
+  "option.fishnotify.require_rod": "Require Rod in Hand",
+  "option.fishnotify.repeat": "Repeat Alert",
+  "option.fishnotify.repeat.off": "Off (once)",
+  "option.fishnotify.repeat.seconds": "Every %ss",
+
+  "button.fishnotify.preview": "Preview",
+  "button.fishnotify.upload": "Upload Sound...",
+  "button.fishnotify.remove": "Remove",
+
+  "message.fishnotify.bite": "\u00a7e\u00a7lFish on the line! Reel it in!"
+}

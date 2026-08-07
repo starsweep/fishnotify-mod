@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "id": "fishnotify",
+  "version": "${version}",
+  "name": "FishNotify",
+  "description": "Plays a sound (custom or default) the moment a fish bites, so you know exactly when to reel in. Includes an in-game GUI for custom sound uploads and independent volume control.",
+  "authors": ["you"],
+  "contact": {},
+  "license": "MIT",
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "com.fishnotify.client.FishNotifyClient"
+    ],
+    "modmenu": [
+      "com.fishnotify.gui.FishNotifyModMenuApi"
+    ]
+  },
+  "mixins": [
+    "fishnotify.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=0.19.0",
+    "minecraft": "~26.2",
+    "java": ">=25",
+    "fabric-key-mapping-api-v1": "*",
+    "fabric-lifecycle-events-v1": "*"
+  },
+  "recommends": {
+    "modmenu": "*"
+  }
+}
