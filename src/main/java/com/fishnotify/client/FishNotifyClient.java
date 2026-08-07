@@ -35,8 +35,15 @@ public class FishNotifyClient implements ClientModInitializer {
     // FishMonitorMPMotion, which does the same thing off a raw motion
     // packet - we get an equivalent signal for free just by diffing
     // position each tick, since we're already polling every tick anyway.
-    private static final int HOOK_SETTLE_TICKS = 15; // ~0.75s grace period after cast before we start watching, so the initial splash-into-water doesn't false-trigger
-    private static final double MOTION_Y_DROP_THRESHOLD = 0.15; // blocks dropped in a single tick; idle bobber bob is much smaller than this
+    //
+    // We only arm the watcher once the hook has been floating steadily
+    // (several ticks of near-zero Y movement) rather than after a fixed
+    // delay from the cast - a longer throw has a longer fall arc, so a
+    // fixed timer either fires too early (misreading the cast's own
+    // splash-on-landing as a bite) or too late depending on cast distance.
+    private static final double IDLE_MOVEMENT_THRESHOLD = 0.03; // blocks/tick; below this counts as "floating steadily", not still falling
+    private static final int SETTLE_STABLE_TICKS = 5; // consecutive idle ticks required before we consider the hook settled
+    private static final double MOTION_Y_DROP_THRESHOLD = 0.15; // blocks dropped in a single tick; idle bobber bob is well below this
 
     private static final KeyMapping.Category CATEGORY =
             KeyMapping.Category.register(Identifier.fromNamespaceAndPath("fishnotify", "fishnotify"));
@@ -56,7 +63,8 @@ public class FishNotifyClient implements ClientModInitializer {
     // reference changes (new cast, or reeled in).
     private static FishingHook trackedHook;
     private static double previousHookY;
-    private static int ticksHookPresent;
+    private static boolean hookSettled;
+    private static int consecutiveIdleTicks;
 
     @Override
     public void onInitializeClient() {
@@ -111,19 +119,33 @@ public class FishNotifyClient implements ClientModInitializer {
         if (hook != trackedHook) {
             // New cast (or hook gone) - reset tracking state.
             trackedHook = hook;
-            ticksHookPresent = 0;
+            hookSettled = false;
+            consecutiveIdleTicks = 0;
             if (hook != null) previousHookY = hook.getY();
             return;
         }
 
         if (hook == null) return;
 
-        ticksHookPresent++;
         double currentY = hook.getY();
         double dropThisTick = previousHookY - currentY;
         previousHookY = currentY;
 
-        if (ticksHookPresent < HOOK_SETTLE_TICKS) return; // still settling from the cast splash, ignore
+        if (!hookSettled) {
+            // Still falling/arcing from the cast (or bouncing on landing) -
+            // wait for several ticks of near-zero movement before we trust
+            // any further drop as a real bite rather than the cast itself.
+            if (Math.abs(dropThisTick) < IDLE_MOVEMENT_THRESHOLD) {
+                consecutiveIdleTicks++;
+                if (consecutiveIdleTicks >= SETTLE_STABLE_TICKS) {
+                    hookSettled = true;
+                }
+            } else {
+                consecutiveIdleTicks = 0;
+            }
+            return;
+        }
+
         if (awaitingReel) return; // already alerted for this bite, don't re-trigger
 
         if (dropThisTick >= MOTION_Y_DROP_THRESHOLD) {
